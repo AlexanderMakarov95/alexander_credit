@@ -1,0 +1,12 @@
+import numpy as np      ##importing the package allows to encapsulate n-dimensional arrays of homogenous data from the german credit dataset
+import pandas as pd     ##importing provides expressive data structures in order to work with "relational" or "labeled" data
+
+german = pd.read_csv('german.data.csv', names=["Status", "Month", "Credit", "Purpose", "Credit_AMT", "Savings", "Employment", "Installment", "SexMarital", "Position", "Residence", "Property", "Age", "Other_Installment", "Housing", "Existing_Credits", "Job", "Liability", "Phone", "Foreign", "Prediction"])
+##csv file is written into a dataframe called "german". 
+##columns are renamed according to the data descriptions provided by UCI
+
+german.head(10)
+##output table generated to make sure column data and column names are aligned
+
+german.Prediction.value_counts()
+##count code  of the dataframe for the good and bad credit risks
