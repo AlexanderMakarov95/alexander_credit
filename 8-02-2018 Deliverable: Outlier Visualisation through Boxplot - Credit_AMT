@@ -1,0 +1,16 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from pandas import read_table
+import pandas as pd
+
+german = pd.read_csv('german.data.csv', names=["Status", "Month", "Credit", "Purpose", "Credit_AMT", "Savings", "Employment", "Installment", "SexMarital", "Position", "Residence", "Property", "Age", "Other_Installment", "Housing", "Existing_Credits", "Job", "Liability", "Phone", "Foreign", "Prediction"])
+
+##Port Credit_AMT into single-column dataframe. 
+##Why the singular Choice? It seems to be the only numeric based variable that has a sort of notable distribution amongst its values. 
+german = german.Credit_AMT 
+
+import seaborn as sns
+sns.set_style("whitegrid")
+sns.boxplot(x=german)  
+
+
