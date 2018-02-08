@@ -1,0 +1,124 @@
+##Importation of standard packages 
+import numpy as np
+import pandas as pd
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
+##Here, the metrics are imported to measure the classification performance of our Random Forest
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, classification_report, confusion_matrix  
+
+##Taken from a third-party package, SMOTE - Synthetic Minority Over-Sampling Technique is used for remedying an unbalanced dataset.
+from imblearn.over_sampling import SMOTE
+
+##csv file is written into a dataframe called "german". 
+##columns are renamed according to the data descriptions provided by UCI
+german = pd.read_csv('german.data.csv', names=["Status", "Month", "Credit", "Purpose", "Credit_AMT", "Savings", "Employment", "Installment", "SexMarital", "Position", "Residence", "Property", "Age", "Other_Installment", "Housing", "Existing_Credits", "Job", "Liability", "Phone", "Foreign", "Prediction"])
+
+##Semi-exploration technique that allows us to discover how the data is read from the initial .csv output.
+##Potential conversions may be put into place depending on how we would like the data to be read by certain packages.
+german.dtypes
+
+Credit               object
+Purpose              object
+Credit_AMT            int64
+Savings              object
+Employment           object
+Installment           int64
+SexMarital           object
+Position             object
+Residence             int64
+Property             object
+Age                   int64
+Other_Installment    object
+Housing              object
+Existing_Credits      int64
+Job                  object
+Liability             int64
+Phone                object
+Foreign              object
+Prediction            int64
+dtype: object
+
+##Prior experimentation with the Random Tree Classifier lead to high precision and recall rate which seemed too good to be true. 
+##Further investigation dictates Random Forests are able to deal with categorical variables, but it increases computational complexity to create trees; and hence, the over all forests. This means that the categorical variables  might take more importance to the different number of levels of the feature. For example, the mathematical process will mistake '1, 2, 3, 4, 5' as some sort of scale.
+##To combat this, we change the target class - 'Prediction', from 1 to 0, and 2 to 1. 
+german['Prediction'] = german['Prediction'].map({1: 0, 2: 1})
+
+##Further, re-iterating, pandas' 'get_dummies' feature allows to one-hot encode our categorical  variables. Why? Even though Random Forest is one the most robust tecniques for handling a combination of data types, it can still mishandle data. So, each categorical variable is modeled as a binary feature; 0
+german_one_hot_encode = pd.get_dummies(german)
+##We view the first 5 columns to give ourselves a rough idea of the success of the one-hot encoding. 
+german_one_hot_encode.head()
+
+##In order to produce our random forest, we first need to split our dataset and pinpoint the "grount truth". 
+##A.k.a, the target class (y); the feature that shows how well the model has estimated or predicted.
+
+#We drop the Prediction class in favour of "ground truth", hence all the other variables are left in place.
+x = german_one_hot_encode.drop('Prediction', axis=1)
+##Only the ground truth variable is left in the splitting.
+y = german_one_hot_encode['Prediction']
+
+##Here, we create a training dataset and a test dataset. In a nutshell, the training dataset will be utilised to build and validate the model.
+##The test set, on the other hand, will be "unseen" data, to uncover how well the model works with new records of data.
+training_features, test_features, \
+training_target, test_target, = train_test_split(x, y, test_size = 0.2,random_state=12)
+
+##We split the data again
+x_train, x_test, y_train, y_test = train_test_split(training_features,training_target,test_size=0.2)
+
+#Indeed some confusion may arise when oversampling AFTER, rather than BEFORE. Why?
+##If we opt into oversampling BEFORE splitting the training and validation, we essentially give the training model a "sneak-peak" of the validation segment; ultimately producing a potentially overfitted model.
+##If we are to upsample beforehand, some of the same obervations may end up in both datasets.
+##As a result, the model will predict the value for those observations when making predictions on the validation set yielding relatively higher accuracy and recall.
+##Why? This comes down to SMOTE's algorhtm of using 'nearest neighbour' to generate synthetic records. 
+
+##CONLUSION: By oversampling only on the training segment, none of the information is leaked from the validation set when SMOTE's nearest neighbour creates synthetic observation.
+smote = SMOTE(ratio = 'minority', random_state=0, kind='regular')
+
+x_train_oversample, y_train_oversample = sm.fit_sample(x_train, y_train)
+
+##The holy grail of the model built SO FAR (This is where the black magic happens).
+##According to this article https://www.researchgate.net/publication/230766603_How_Many_Trees_in_a_Random_Forest, it is recommended to use between 62-128 trees.
+##n_estimators essentially dictates how many trees are computed in the random forest.
+##random_state is a hyperparamater best left untuned according to stack exchange(https://stats.stackexchange.com/questions/263999/is-random-state-a-parameter-to-tune/264008). It states that hypermeters control high-level aspect of an algorithms behaviour. According to popular example on python models on the internet, the ideal value is 0.
+##It should be noted that with such a small dataframe (relative to the data analytics industry), the official page of the algorithm states that random forest does not overtift, and you can use as much trees as you want. 
+##In our case, 20, 000 was the optimal amount (despite long processing times).
+smote_random_forest = RandomForestClassifier(n_estimators=20000, random_state=0)
+
+##The random forest is fit to the x and y dimensions of the oversampled data.
+smote_random_forest.fit(x_train_oversample, y_train_oversample)
+
+#Metrics for the training portion
+print ('Training Results')
+print (('Accuracy:  '), (accuracy_score(y_test, smote_random_forest.predict(x_test))))
+print (('Recall:  '), (recall_score(y_test, smote_random_forest.predict(x_test))))
+print (('F1 Score:  '), (f1_score(y_test, smote_random_forest.predict(x_test))))
+print (('Precision:  '), (precision_score(y_test, smote_random_forest.predict(x_test))))
+#Metrics for the test results
+print (('\nTest Results'))
+print (('Accuracy:  '), (smote_random_forest.score(test_features, test_target)))
+print (('Recall:  '), (recall_score(test_target, smote_random_forest.predict(test_features))))
+print (('F1 Score:  '), (f1_score(test_target, smote_random_forest.predict(test_features))))
+print (('Precision:  '), (precision_score(test_target, smote_random_forest.predict(test_features))))
+
+##Not too shabby, if you ask me...for now.
+
+Training Results
+Accuracy:   0.775
+Recall:   0.352941176471
+F1 Score:   0.5
+Precision:   0.857142857143
+
+Test Results
+Accuracy:   0.715
+Recall:   0.385714285714
+F1 Score:   0.486486486486
+Precision:   0.658536585366
+
+#Confusion matrix
+print (('\n Confusion Matrix:\n'), (confusion_matrix(test_target, smote_random_forest.predict(test_features))))
+
+
+ Confusion Matrix:
+ [[116  14]
+ [ 43  27]]
