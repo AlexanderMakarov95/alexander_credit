@@ -1,0 +1,51 @@
+import numpy as np      ##importing the package allows to encapsulate n-dimensional arrays of homogenous data from the german credit dataset
+import pandas as pd     ##importing provides expressive data structures in order to work with "relational" or "labeled" data
+import seaborn as sns
+import matplotlib.pyplot as plt 
+%matplotlib inline
+
+german = pd.read_csv('german.data.csv', names=["Status", "Month", "Credit", "Purpose", "Credit_AMT", "Savings", "Employment", "Installment", "SexMarital", "Position", "Residence", "Property", "Age", "Other_Installment", "Housing", "Existing_Credits", "Job", "Liability", "Phone", "Foreign", "Prediction"])
+
+##csv file is written into a dataframe called "german". 
+##columns are renamed according to the data descriptions provided by UCI
+
+##Pearson Correlation with heatmap
+corr_pearson = german.corr(method= 'pearson')
+
+mask = np.zeros_like(corr_pearson, dtype=np.bool)
+mask[np.triu_indices_from(mask)] = True
+
+cmap = sns.diverging_palette(220, 10, as_cmap=True)
+
+sns.heatmap(corr_pearson, mask=mask, cmap=cmap, vmax=1, center=0,
+           square=True, linewidths=.5, cbar_kws={"shrink": .5})
+         
+##Kendall Correlation with heatmap
+corr_kendall = german.corr(method= 'kendall')
+
+mask = np.zeros_like(corr_kendall, dtype=np.bool)
+mask[np.triu_indices_from(mask)] = True
+
+cmap = sns.diverging_palette(220, 10, as_cmap=True)
+
+sns.heatmap(corr_kendall, mask=mask, cmap=cmap, vmax=1, center=0,
+           square=True, linewidths=.5, cbar_kws={"shrink": .5})
+
+##Spearman Correlation with heatmap
+
+corr_spearman = german.corr(method= 'spearman')
+
+mask = np.zeros_like(corr_spearman, dtype=np.bool)
+mask[np.triu_indices_from(mask)] = True
+
+cmap = sns.diverging_palette(220, 10, as_cmap=True)
+
+sns.heatmap(corr_spearman , mask=mask, cmap=cmap, vmax=1, center=0,
+           square=True, linewidths=.5, cbar_kws={"shrink": .5})
+           
+           
+## Noteable Correlations:
+## Pearson, Kendall and Spearman :
+      Credit_AMT and Month = 0.624984, 0.465738, 0.624709
+      Installment and Credit_AMT = -0.271316, 0.238537, -0.313100
+
